@@ -219,3 +219,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local UI prefs (theme / model / concurrency). Never secrets.
+projects/.sfts-ui.json

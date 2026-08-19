@@ -117,8 +117,6 @@
   "keys.set": "Set",
   "keys.unset": "Not set",
   "keys.local_only": "Keys stay in local .env. This screen never shows the full secret.",
-  "keys.connect_sub": "Connect a subscription",
-  "keys.sub_wait": "Waiting for security review. This does not send any request.",
   "glossary.col_src": "Source term",
   "glossary.col_dst": "Preferred translation",
   "main.preview_empty": "No content yet.",

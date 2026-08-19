@@ -46,6 +46,7 @@ def translate_document(
     source_lang: Optional[str] = None,
     project: Optional[str] = None,
     provider_choice: str = "auto",
+    model: str | None = None,
 ) -> Tuple[str, int]:
     """
     Returns (translated_full_text, number_of_chunks).
@@ -66,6 +67,7 @@ def translate_document(
             source_lang=source_lang,
             glossary_block=glossary_block,
             provider_choice=provider_choice,
+            model=model,
         )
         results.append(out)
     return "\n".join(results), len(chunks)
@@ -80,6 +82,7 @@ def translate_string_list(
     source_lang: Optional[str] = None,
     project: Optional[str] = None,
     provider_choice: str = "auto",
+    model: str | None = None,
 ) -> list[str]:
     """Translate player-facing strings. Identical inputs share one result."""
     if not strings:
@@ -124,6 +127,7 @@ def translate_string_list(
             source_lang=source_lang,
             glossary_block=glossary_block,
             provider_choice=provider_choice,
+            model=model,
         )
         leftover = out
         for n, i in enumerate(batch):

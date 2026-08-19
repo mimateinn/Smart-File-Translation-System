@@ -14,7 +14,7 @@ from .base import BaseProvider, TranslationError
 class GeminiProvider(BaseProvider):
     name = "gemini"
 
-    def __init__(self) -> None:
+    def __init__(self, model: str | None = None) -> None:
         cfg = get_gemini_config()
         if not cfg.available or not cfg.api_key:
             raise TranslationError(
@@ -22,7 +22,7 @@ class GeminiProvider(BaseProvider):
                 provider=self.name,
             )
         self.api_key = cfg.api_key
-        self.model = cfg.model
+        self.model = (model or "").strip() or cfg.model
         self.base = "https://generativelanguage.googleapis.com"
 
     def translate(

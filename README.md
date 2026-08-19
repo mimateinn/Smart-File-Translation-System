@@ -38,7 +38,10 @@ If you want extra options later, they live in the `.env` file:
 | `OPENAI_MODEL` | Model name (default `gpt-4o-mini`) |
 | `ANTHROPIC_API_KEY` | Key for Anthropic |
 | `ANTHROPIC_MODEL` | Model name |
-| `DEFAULT_PROVIDER` | `auto`, `openai`, or `anthropic` |
+| `DEFAULT_PROVIDER` | `auto`, `openai`, `anthropic`, `gemini`, `xai`, `grok_cli`, or `codex_cli` |
+| `XAI_API_KEY` | Optional official xAI API key (not a grok.com login) |
+| `GROK_CLI_PATH` | Optional path to an already-installed official `grok` program |
+| `CODEX_CLI_PATH` | Optional path to an already-installed official `codex` program |
 | `TRANSLATE_CHUNK_SIZE` | How much text to send at a time (default 3000) |
 
 Keep keys only in `.env`. Never put them in the repository.
@@ -55,6 +58,9 @@ Keep keys only in `.env`. Never put them in the repository.
 - Game text mode: only words players read.
 - Official developer APIs only. Chat websites cannot be connected.
 - Official-package updater: start scripts and the in-app button share one local overlay helper.
+- Settings layout: Translate / Settings tabs, a left list for Appearance / Translation / Keys / Glossary, light and dark, and a small official-update link.
+- Choose the model for the selected provider. Folder and zip jobs can translate 1 to 8 files at a time (default 2).
+- Optional official Grok CLI and Codex CLI if they are already installed and already logged in on this computer. The app never reads their login files.
 
 ### v0.1.0
 
@@ -98,7 +104,10 @@ Keep keys only in `.env`. Never put them in the repository.
 | `OPENAI_MODEL` | 模型名稱（預設 `gpt-4o-mini`） |
 | `ANTHROPIC_API_KEY` | Anthropic 金鑰 |
 | `ANTHROPIC_MODEL` | 模型名稱 |
-| `DEFAULT_PROVIDER` | `auto`、`openai` 或 `anthropic` |
+| `DEFAULT_PROVIDER` | `auto`、`openai`、`anthropic`、`gemini`、`xai`、`grok_cli` 或 `codex_cli` |
+| `XAI_API_KEY` | 可選的官方 xAI API 金鑰（不是 grok.com 登入） |
+| `GROK_CLI_PATH` | 可選：已安裝的官方 `grok` 程式路徑 |
+| `CODEX_CLI_PATH` | 可選：已安裝的官方 `codex` 程式路徑 |
 | `TRANSLATE_CHUNK_SIZE` | 一次送出的文字量（預設 3000） |
 
 金鑰只放在 `.env`。不要寫進倉庫。
@@ -115,6 +124,9 @@ Keep keys only in `.env`. Never put them in the repository.
 - 遊戲文字模式：只翻譯玩家會看到的句子。
 - 只能接官方開發者 API。不能連接聊天網站。
 - 官方包裝更新：啟動檔與程式內按鈕共用同一個本機 overlay。
+- 設定畫面：翻譯／設定分頁，左側外觀／翻譯／金鑰／用語表，淺色與深色，以及小型官方更新連結。
+- 可依所選供應商挑選模型。資料夾與 zip 一次可翻譯 1 到 8 個檔案（預設 2）。
+- 若這台電腦已安裝並自行登入官方 Grok CLI 或 Codex CLI，可以使用。程式不會讀取它們的登入檔。
 
 ### v0.1.0
 

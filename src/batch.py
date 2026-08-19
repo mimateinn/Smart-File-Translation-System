@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -39,6 +40,17 @@ SKIP_DIR_NAMES = {
 
 DEFAULT_MAX_FILES = 400
 DEFAULT_MAX_BYTES = 80_000_000
+DEFAULT_CONCURRENCY = 2
+MIN_CONCURRENCY = 1
+MAX_CONCURRENCY = 8
+
+
+def clamp_concurrency(value) -> int:
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        return DEFAULT_CONCURRENCY
+    return max(MIN_CONCURRENCY, min(MAX_CONCURRENCY, n))
 
 
 @dataclass
@@ -159,6 +171,7 @@ def _make_translator(
     source_lang: str | None,
     project: str | None,
     provider_choice: str,
+    model: str | None = None,
 ):
     def translate(strings: list[str]) -> list[str]:
         return translate_string_list(
@@ -167,6 +180,7 @@ def _make_translator(
             source_lang=source_lang,
             project=project,
             provider_choice=provider_choice,
+            model=model,
         )
 
     return translate
@@ -237,6 +251,8 @@ def translate_tree(
     game_mode: bool,
     job_kind: str = "folder",
     job_name: str = "batch",
+    model: str | None = None,
+    concurrency: int = DEFAULT_CONCURRENCY,
 ) -> BatchReport:
     source_root = source_root.resolve()
     if not source_root.is_dir():
@@ -245,12 +261,13 @@ def translate_tree(
     out_root = (outputs_dir() / _english_job_name(job_kind, job_name)).resolve()
     out_root.mkdir(parents=True, exist_ok=True)
     report = BatchReport(output_root=str(out_root))
-    translate = _make_translator(target_lang, source_lang, project, provider_choice)
+    workers = clamp_concurrency(concurrency)
     kw = dict(
         target_lang=target_lang,
         source_lang=source_lang,
         project=project,
         provider_choice=provider_choice,
+        model=model,
     )
 
     files = iter_source_files(source_root)
@@ -265,6 +282,7 @@ def translate_tree(
     if total > _max_bytes():
         raise TranslationError("Folder is larger than the size cap.")
 
+    jobs: list[tuple[Path, Path, str]] = []
     for src in files:
         rel = str(src.relative_to(source_root)).replace("\\", "/")
         if not stay_inside(source_root, src):
@@ -287,6 +305,11 @@ def translate_tree(
         if dest.resolve() == src.resolve():
             report.skipped.append(BatchItem(rel=rel, skipped="refuses to overwrite source"))
             continue
+        jobs.append((src, dest, rel))
+
+    def _run_one(src: Path, dest: Path, rel: str) -> tuple[str, BatchItem]:
+        translate = _make_translator(target_lang, source_lang, project, provider_choice, model)
+        suffix = src.suffix.lower()
         try:
             if suffix in SCRIPT_SUFFIXES:
                 _translate_script(src, dest, translate)
@@ -295,13 +318,23 @@ def translate_tree(
             elif suffix in DOCUMENT_SUFFIXES:
                 _translate_document(src, dest, game_mode, **kw)
             else:
-                report.skipped.append(BatchItem(rel=rel, skipped="unsupported type"))
-                continue
-            report.written.append(BatchItem(rel=rel, out=str(dest)))
+                return "skipped", BatchItem(rel=rel, skipped="unsupported type")
+            return "written", BatchItem(rel=rel, out=str(dest))
         except TranslationError as e:
-            report.skipped.append(BatchItem(rel=rel, error=str(e)))
+            return "skipped", BatchItem(rel=rel, error=str(e))
         except Exception as e:
-            report.skipped.append(BatchItem(rel=rel, error=str(e)))
+            return "skipped", BatchItem(rel=rel, error=str(e))
+
+    if not jobs:
+        return report
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futs = [pool.submit(_run_one, src, dest, rel) for src, dest, rel in jobs]
+        for fut in as_completed(futs):
+            kind, item = fut.result()
+            if kind == "written":
+                report.written.append(item)
+            else:
+                report.skipped.append(item)
     return report
 
 
@@ -314,17 +347,21 @@ def translate_single_file(
     project: str | None,
     provider_choice: str,
     game_mode: bool,
+    model: str | None = None,
+    concurrency: int = DEFAULT_CONCURRENCY,
 ) -> None:
     dest = dest.resolve()
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.resolve() == src.resolve():
         raise TranslationError("Refuses to overwrite the source file.")
-    translate = _make_translator(target_lang, source_lang, project, provider_choice)
+    _ = clamp_concurrency(concurrency)
+    translate = _make_translator(target_lang, source_lang, project, provider_choice, model)
     kw = dict(
         target_lang=target_lang,
         source_lang=source_lang,
         project=project,
         provider_choice=provider_choice,
+        model=model,
     )
     suffix = src.suffix.lower()
     if suffix in SCRIPT_SUFFIXES:

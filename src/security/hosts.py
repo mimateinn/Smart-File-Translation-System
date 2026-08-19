@@ -33,6 +33,9 @@ _BLOCKED_WEBSITE_HOSTS = frozenset(
         "grok.x.ai",
         "grok.com",
         "www.grok.com",
+        "cli-chat-proxy.grok.com",
+        "auth.x.ai",
+        "accounts.x.ai",
         "x.com",
         "twitter.com",
     }

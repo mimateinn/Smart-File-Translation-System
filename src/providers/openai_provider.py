@@ -13,7 +13,7 @@ from .base import BaseProvider, TranslationError
 class OpenAIProvider(BaseProvider):
     name = "openai"
 
-    def __init__(self) -> None:
+    def __init__(self, model: str | None = None) -> None:
         cfg = get_openai_config()
         if not cfg.available or not cfg.api_key:
             raise TranslationError(
@@ -26,7 +26,7 @@ class OpenAIProvider(BaseProvider):
             base_url=base,
             http_client=make_secure_client(),
         )
-        self.model = cfg.model
+        self.model = (model or "").strip() or cfg.model
 
     def translate(
         self,

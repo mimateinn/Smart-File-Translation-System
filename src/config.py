@@ -83,6 +83,18 @@ def get_gemini_config() -> ProviderConfig:
     )
 
 
+def get_xai_config() -> ProviderConfig:
+    """Official xAI API key only. Not a grok.com login and not the Grok CLI."""
+    key = _get("XAI_API_KEY")
+    return ProviderConfig(
+        name="xai",
+        api_key=key or None,
+        base_url="https://api.x.ai/v1",
+        model=_get("XAI_MODEL", "grok-3-mini") or "grok-3-mini",
+        available=bool(key),
+    )
+
+
 def list_available_providers() -> list[str]:
     names = []
     if get_openai_config().available:
@@ -91,12 +103,21 @@ def list_available_providers() -> list[str]:
         names.append("anthropic")
     if get_gemini_config().available:
         names.append("gemini")
+    if get_xai_config().available:
+        names.append("xai")
+    from .providers.grok_cli import probe_grok_cli
+    from .providers.codex_cli import probe_codex_cli
+
+    if probe_grok_cli().usable:
+        names.append("grok_cli")
+    if probe_codex_cli().usable:
+        names.append("codex_cli")
     return names
 
 
 def get_default_provider() -> str:
     val = _get("DEFAULT_PROVIDER", "auto").lower()
-    if val in ("auto", "openai", "anthropic", "gemini"):
+    if val in ("auto", "openai", "anthropic", "gemini", "xai", "grok_cli", "codex_cli"):
         return val
     return "auto"
 

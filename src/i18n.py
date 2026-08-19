@@ -25,6 +25,8 @@ SUPPORTED_LANGS = [
 ]
 
 DEFAULT_LANG = "zh-Hant"
+# First-run UI language when the browser/OS language is unknown.
+FALLBACK_LANG = "en"
 
 _cache: dict[str, dict[str, str]] = {}
 
@@ -80,3 +82,33 @@ def available_languages() -> list[str]:
 def language_display_name(code: str, ui_lang: str = DEFAULT_LANG) -> str:
     """Human name of language code, looked up from current UI catalog."""
     return t(f"lang.{code}", ui_lang) or code
+
+
+def detect_ui_language(accept_language: str = "") -> str:
+    """Map a browser/OS Accept-Language value to a catalog. English if unknown."""
+    raw = (accept_language or "").strip()
+    if not raw:
+        try:
+            import locale
+
+            loc = locale.getdefaultlocale()[0] or ""
+            raw = loc.replace("_", "-")
+        except Exception:
+            raw = ""
+    if not raw:
+        return FALLBACK_LANG
+    supported = {c.lower(): c for c in SUPPORTED_LANGS}
+    for part in raw.split(","):
+        tag = part.split(";")[0].strip().lower().replace("_", "-")
+        if not tag:
+            continue
+        if tag in {"zh-tw", "zh-hant", "zh-hk", "zh-mo"}:
+            return "zh-Hant"
+        if tag in {"zh-cn", "zh-hans", "zh-sg"} or tag == "zh":
+            return "zh-Hans"
+        if tag in supported:
+            return supported[tag]
+        primary = tag.split("-")[0]
+        if primary in supported:
+            return supported[primary]
+    return FALLBACK_LANG

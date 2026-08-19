@@ -88,6 +88,10 @@ def save_secret_to_env(name: str, value: str) -> None:
         "ALLOWED_API_HOSTS",
         "OPENAI_MODEL",
         "ANTHROPIC_MODEL",
+        "GEMINI_MODEL",
+        "XAI_MODEL",
+        "GROK_CLI_PATH",
+        "CODEX_CLI_PATH",
         "DEFAULT_PROVIDER",
     }:
         raise ValueError("Unknown setting name.")
