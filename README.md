@@ -19,11 +19,13 @@ You do not need to type any other commands. The starter makes a local work folde
 
 ## What you can do
 
-1. Upload a file and translate it.
-2. Save words you care about so later files use the same wording.
-3. Change the on-screen language. Twelve languages are included.
+1. Translate one file, a whole folder, or a zip.
+2. Use game-text mode so only words players read are changed.
+3. Save words you care about so later files use the same wording.
+4. Change the on-screen language. Twelve languages are included.
+5. Press **Check for official updates**, or just start the app — it looks for a newer official package at most once a day.
 
-Translated files are saved in `data/outputs/` and can also be downloaded in the browser.
+Translated files are saved in `data/outputs/` and can also be downloaded in the browser. Your keys and your own folders stay on this computer.
 
 ## Optional settings
 
@@ -47,7 +49,12 @@ Keep keys only in `.env`. Never put them in the repository.
 
 - Added `start.bat` (Windows) and `start.sh` (Mac / Linux) so you can start the app with one click.
 - Public listing is now English on top and Traditional Chinese below in this same file.
-- Contact email removed from the listing.
+- Personal mailbox lines were removed from the listing.
+- Folder and zip batch: one output file for each input file, same folder shape.
+- More file types: json, csv, tsv, yaml, po, xliff, xlsx, html, srt, vtt.
+- Game text mode: only words players read.
+- Official developer APIs only. Chat websites cannot be connected.
+- Official-package updater: start scripts and the in-app button share one local overlay helper.
 
 ### v0.1.0
 
@@ -72,11 +79,13 @@ Keep keys only in `.env`. Never put them in the repository.
 
 ## 你可以做什麼
 
-1. 上傳檔案並翻譯。
-2. 把重要用詞存下來，之後翻譯會比較一致。
-3. 切換畫面語言。內建十二種語言。
+1. 翻譯一個檔案、整個資料夾，或一個 zip。
+2. 遊戲文字模式只改玩家會看到的句子。
+3. 把重要用詞存下來，之後翻譯會比較一致。
+4. 切換畫面語言。內建十二種語言。
+5. 按「檢查官方更新」，或直接啟動程式——一天最多查一次官方包裝。
 
-譯好的檔案會放在 `data/outputs/`，也可以在瀏覽器下載。
+譯好的檔案會放在 `data/outputs/`，也可以在瀏覽器下載。金鑰和你自己的資料夾都留在這台電腦。
 
 ## 選擇性設定
 
@@ -100,7 +109,12 @@ Keep keys only in `.env`. Never put them in the repository.
 
 - 新增 `start.bat`（Windows）與 `start.sh`（Mac / Linux），按一下就能啟動。
 - 公開說明改為同一份檔案：英文在上、繁體中文在下。
-- 已從公開說明移除聯絡信箱。
+- 公開說明已不再放任何信箱。
+- 資料夾與 zip 批次：一個輸入檔對一個輸出檔，資料夾形狀相同。
+- 更多檔案種類：json、csv、tsv、yaml、po、xliff、xlsx、html、srt、vtt。
+- 遊戲文字模式：只翻譯玩家會看到的句子。
+- 只能接官方開發者 API。不能連接聊天網站。
+- 官方包裝更新：啟動檔與程式內按鈕共用同一個本機 overlay。
 
 ### v0.1.0
 

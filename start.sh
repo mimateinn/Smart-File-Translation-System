@@ -21,5 +21,8 @@ if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp .env.example .env
 fi
 
+echo "Checking for an official update..."
+python scripts/sfts_overlay.py --daily || true
+
 echo "Starting the app. A browser window should open soon..."
 exec streamlit run app.py

@@ -151,6 +151,9 @@ activemq-data/
 .env
 .envrc
 .venv
+
+# Overlay updater local state (not a release stamp)
+.sfts-update-state
 env/
 venv/
 ENV/

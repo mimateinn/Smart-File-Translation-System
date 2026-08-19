@@ -5,6 +5,8 @@ from typing import Optional
 from anthropic import Anthropic, APIError, AuthenticationError, RateLimitError
 
 from ..config import get_anthropic_config
+from ..security.http import make_secure_client
+from ..security.secrets import redact_secrets
 from .base import BaseProvider, TranslationError
 
 
@@ -18,7 +20,10 @@ class AnthropicProvider(BaseProvider):
                 "ANTHROPIC_API_KEY is not set. Add it to .env and restart.",
                 provider=self.name,
             )
-        self.client = Anthropic(api_key=cfg.api_key)
+        self.client = Anthropic(
+            api_key=cfg.api_key,
+            http_client=make_secure_client(),
+        )
         self.model = cfg.model
 
     def translate(
@@ -60,10 +65,10 @@ class AnthropicProvider(BaseProvider):
                 raise TranslationError("Empty response from Anthropic.", self.name)
             return content
         except AuthenticationError as e:
-            raise TranslationError(f"Authentication failed: {e}", self.name) from e
+            raise TranslationError(redact_secrets("Authentication failed."), self.name) from e
         except RateLimitError as e:
-            raise TranslationError(f"Rate limit: {e}", self.name) from e
+            raise TranslationError(redact_secrets("Rate limit."), self.name) from e
         except APIError as e:
-            raise TranslationError(f"API error: {e}", self.name) from e
+            raise TranslationError(redact_secrets(f"API error: {e}"), self.name) from e
         except Exception as e:
-            raise TranslationError(f"Unexpected error: {e}", self.name) from e
+            raise TranslationError(redact_secrets(f"Unexpected error: {e}"), self.name) from e

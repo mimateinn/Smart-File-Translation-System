@@ -3,9 +3,16 @@
 - `README.md` — Bilingual public listing (English on top, Traditional Chinese below), child-friendly steps, changelog.
 - `README.zh-Hant.md` — Short pointer to README.md.
 - `icon.png` — App icon shown at the top of README.md.
-- `start.bat` — Windows one-click starter (makes a local folder, installs, copies .env if missing, opens the app).
+- `start.bat` — Windows one-click starter (makes a local folder, installs, copies .env if missing, daily overlay check, opens the app).
 - `start.sh` — Mac/Linux starter with the same steps as start.bat.
+- `scripts/sfts_overlay.py` — Local official-release overlay entry used by start scripts and the in-app button.
 - `scripts/build-portable.sh` — Local zip recipe only. Do not attach the zip to a GitHub Release until Maid approves a tag.
+- `.sfts-release` — Stamp of the official tag + commit SHA (not a file version string).
+- `src/updater/` — Pinned GitHub overlay (api.github.com / codeload.github.com only, fail-closed).
+- `src/batch.py` — Folder and zip batch with zip-slip-safe extract and mirrored outputs.
+- `src/game_text.py` — Player-facing vs identifier heuristics; script literals.
+- `src/extractors/textish.py` — Thin local parsers for json/csv/yaml/po/xliff/html/srt/vtt/xlsx.
+- `src/security/` — Official-API host allowlist, local secret helpers, PKCE-only OAuth builder.
 - `.env.example` — Template for provider keys and options; no real secrets.
 - `.gitignore` — Official Python gitignore from the empty public repo (includes `.env`).
 - `requirements.txt` — Runtime dependencies for Streamlit UI, extractors, and both providers.

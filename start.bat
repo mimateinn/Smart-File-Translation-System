@@ -33,6 +33,9 @@ if not exist ".env" (
     if exist ".env.example" copy ".env.example" ".env" >nul
 )
 
+echo Checking for an official update...
+python scripts\sfts_overlay.py --daily
+
 echo Starting the app. A browser window should open soon...
 streamlit run app.py
 if errorlevel 1 pause

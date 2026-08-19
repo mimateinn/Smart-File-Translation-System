@@ -3,13 +3,28 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Tuple
 
 from .txt_md import extract_txt_md, write_txt_md
 from .docx_handler import extract_docx, write_docx
 from .pdf_handler import extract_pdf, write_pdf
 
-SUPPORTED_SUFFIXES = {".txt", ".md", ".markdown", ".docx", ".pdf"}
+DOCUMENT_SUFFIXES = {".txt", ".md", ".markdown", ".docx", ".pdf"}
+STRUCTURED_SUFFIXES = {
+    ".json",
+    ".csv",
+    ".tsv",
+    ".yaml",
+    ".yml",
+    ".po",
+    ".pot",
+    ".xliff",
+    ".xlsx",
+    ".html",
+    ".htm",
+    ".srt",
+    ".vtt",
+}
+SUPPORTED_SUFFIXES = DOCUMENT_SUFFIXES | STRUCTURED_SUFFIXES
 
 
 def extract_text(path: Path) -> str:
@@ -20,6 +35,8 @@ def extract_text(path: Path) -> str:
         return extract_docx(path)
     if suffix == ".pdf":
         return extract_pdf(path)
+    if suffix in STRUCTURED_SUFFIXES:
+        return path.read_text(encoding="utf-8", errors="replace")
     raise ValueError(f"unsupported format: {suffix}")
 
 
@@ -37,9 +54,9 @@ def write_translated(
         return write_docx(original_path, translated_text, output_path)
     if suffix == ".pdf":
         return write_pdf(translated_text, output_path)
-    # fallback
-    out = output_path.with_suffix(".txt")
-    return write_txt_md(translated_text, out)
+    out = output_path
+    out.write_text(translated_text, encoding="utf-8")
+    return out
 
 
 def is_supported(filename: str) -> bool:

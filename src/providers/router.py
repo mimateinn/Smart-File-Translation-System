@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Optional
 
-from ..config import list_available_providers, get_default_provider
+from ..config import list_available_providers
 from .base import BaseProvider, TranslationError
 from .openai_provider import OpenAIProvider
 from .anthropic_provider import AnthropicProvider
+from .gemini_provider import GeminiProvider
 
 
 def resolve_provider(choice: str = "auto") -> BaseProvider:
@@ -17,7 +18,7 @@ def resolve_provider(choice: str = "auto") -> BaseProvider:
     if not available:
         raise TranslationError(
             "No translation provider is available. "
-            "Set OPENAI_API_KEY and/or ANTHROPIC_API_KEY in .env, then restart the app."
+            "Set an official developer API key in .env, then restart the app."
         )
 
     choice = (choice or "auto").lower().strip()
@@ -38,6 +39,13 @@ def resolve_provider(choice: str = "auto") -> BaseProvider:
                 provider="anthropic",
             )
         return AnthropicProvider()
+    if choice == "gemini":
+        if "gemini" not in available:
+            raise TranslationError(
+                "Gemini provider selected but GEMINI_API_KEY is missing.",
+                provider="gemini",
+            )
+        return GeminiProvider()
 
     raise TranslationError(f"Unknown provider: {choice}")
 
