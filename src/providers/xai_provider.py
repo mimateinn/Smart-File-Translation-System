@@ -1,27 +1,33 @@
+"""Official xAI developer API only (https://api.x.ai/v1). No grok.com, no Grok CLI."""
+
 from __future__ import annotations
 
 from typing import Optional
 
-from anthropic import Anthropic, APIError, AuthenticationError, RateLimitError
+from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 
-from ..config import get_anthropic_config
+from ..config import get_xai_config
 from ..security.http import make_secure_client
 from ..security.secrets import redact_secrets
 from .base import BaseProvider, TranslationError
 
+# Pinned official HTTPS endpoint. Never grok.com or a local CLI proxy.
+_XAI_BASE = "https://api.x.ai/v1"
 
-class AnthropicProvider(BaseProvider):
-    name = "anthropic"
+
+class XAIProvider(BaseProvider):
+    name = "xai"
 
     def __init__(self, model: str | None = None) -> None:
-        cfg = get_anthropic_config()
+        cfg = get_xai_config()
         if not cfg.available or not cfg.api_key:
             raise TranslationError(
-                "ANTHROPIC_API_KEY is not set. Add it to .env and restart.",
+                "XAI_API_KEY is not set. Add the official xAI API key to .env and restart.",
                 provider=self.name,
             )
-        self.client = Anthropic(
+        self.client = OpenAI(
             api_key=cfg.api_key,
+            base_url=cfg.base_url or _XAI_BASE,
             http_client=make_secure_client(),
         )
         self.model = (model or "").strip() or cfg.model
@@ -49,20 +55,17 @@ class AnthropicProvider(BaseProvider):
             f"Text to translate:\n{text}"
         )
         try:
-            msg = self.client.messages.create(
+            resp = self.client.chat.completions.create(
                 model=self.model,
-                max_tokens=8192,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
                 temperature=0.2,
-                system=system,
-                messages=[{"role": "user", "content": user}],
             )
-            content = ""
-            for block in msg.content:
-                if hasattr(block, "text"):
-                    content += block.text
-            content = content.strip()
+            content = (resp.choices[0].message.content or "").strip()
             if not content:
-                raise TranslationError("Empty response from Anthropic.", self.name)
+                raise TranslationError("Empty response from xAI API.", self.name)
             return content
         except AuthenticationError as e:
             raise TranslationError(redact_secrets("Authentication failed."), self.name) from e

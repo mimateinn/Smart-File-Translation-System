@@ -151,6 +151,9 @@ activemq-data/
 .env
 .envrc
 .venv
+
+# Overlay updater local state (not a release stamp)
+.sfts-update-state
 env/
 venv/
 ENV/
@@ -216,3 +219,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local UI prefs (theme / model / concurrency). Never secrets.
+projects/.sfts-ui.json
+
+# Live UI captures. Never commit.
+.playwright-mcp/
+sfts-live-*.png

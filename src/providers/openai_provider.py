@@ -4,25 +4,29 @@ from typing import Optional
 
 from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 
-from ..config import get_openai_config
+from ..config import get_openai_config, safe_openai_base_url
+from ..security.http import make_secure_client
+from ..security.secrets import redact_secrets
 from .base import BaseProvider, TranslationError
 
 
 class OpenAIProvider(BaseProvider):
     name = "openai"
 
-    def __init__(self) -> None:
+    def __init__(self, model: str | None = None) -> None:
         cfg = get_openai_config()
         if not cfg.available or not cfg.api_key:
             raise TranslationError(
                 "OPENAI_API_KEY is not set. Add it to .env and restart.",
                 provider=self.name,
             )
+        base = cfg.base_url or safe_openai_base_url()
         self.client = OpenAI(
             api_key=cfg.api_key,
-            base_url=cfg.base_url or None,
+            base_url=base,
+            http_client=make_secure_client(),
         )
-        self.model = cfg.model
+        self.model = (model or "").strip() or cfg.model
 
     def translate(
         self,
@@ -60,10 +64,10 @@ class OpenAIProvider(BaseProvider):
                 raise TranslationError("Empty response from OpenAI-compatible API.", self.name)
             return content
         except AuthenticationError as e:
-            raise TranslationError(f"Authentication failed: {e}", self.name) from e
+            raise TranslationError(redact_secrets("Authentication failed."), self.name) from e
         except RateLimitError as e:
-            raise TranslationError(f"Rate limit: {e}", self.name) from e
+            raise TranslationError(redact_secrets("Rate limit."), self.name) from e
         except APIError as e:
-            raise TranslationError(f"API error: {e}", self.name) from e
+            raise TranslationError(redact_secrets(f"API error: {e}"), self.name) from e
         except Exception as e:
-            raise TranslationError(f"Unexpected error: {e}", self.name) from e
+            raise TranslationError(redact_secrets(f"Unexpected error: {e}"), self.name) from e
