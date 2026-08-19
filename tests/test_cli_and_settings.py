@@ -135,6 +135,27 @@ def test_detect_language() -> None:
     assert detect_ui_language("") in {"en", "zh-Hant", "zh-Hans"} or True
 
 
+def test_v2_chrome_contract() -> None:
+    root = Path(__file__).resolve().parents[1]
+    icon = (root / "icon.png").read_bytes()
+    assert icon[:8] == b"\x89PNG\r\n\x1a\n"
+    assert len(icon) > 500
+    theme = (root / "src" / "theme.py").read_text(encoding="utf-8")
+    assert "14b8a6" in theme
+    assert "st-key-nav_translate" in theme
+    assert "stFileUploaderDropzoneInstructions" in theme
+    assert "stAppDeployButton" in theme
+    app = (root / "app.py").read_text(encoding="utf-8")
+    assert "sfts-hero" in app
+    assert "sfts-filechip" in app
+    assert 'SETTINGS_PANES = ("appearance", "translation", "keys", "glossary")' in app
+    assert "status.info" not in app
+    assert "L(\"main.status_ready\")" not in app
+    maker = (root / "scripts" / "make_icon.py").read_text(encoding="utf-8")
+    assert (root / "scripts" / "make_icon.py").is_file()
+    assert "No letters" in maker
+
+
 def test_locales_hide_subscription_copy() -> None:
     root = Path(__file__).resolve().parents[1] / "locales"
     for path in root.glob("*.json"):
@@ -154,5 +175,6 @@ if __name__ == "__main__":
     test_cli_binary_names_only()
     test_sources_never_read_auth_files()
     test_detect_language()
+    test_v2_chrome_contract()
     test_locales_hide_subscription_copy()
     print("ok")

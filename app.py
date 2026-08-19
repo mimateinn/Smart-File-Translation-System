@@ -6,6 +6,7 @@ Run: streamlit run app.py
 
 from __future__ import annotations
 
+import base64
 import subprocess
 import sys
 import tempfile
@@ -64,16 +65,28 @@ def _browser_accept_language() -> str:
 def _init_state() -> None:
     prefs = load_prefs()
     langs = available_languages()
+    follow = prefs.get("ui_lang_follow")
+    if follow is None:
+        follow = prefs.get("ui_lang") not in langs
     saved_lang = prefs.get("ui_lang")
-    if saved_lang not in langs:
+    if follow or saved_lang not in langs:
         saved_lang = detect_ui_language(_browser_accept_language())
         if saved_lang not in langs:
             saved_lang = FALLBACK_LANG if FALLBACK_LANG in langs else langs[0]
+        follow = True if prefs.get("ui_lang_follow") is None else bool(follow)
     saved_provider = prefs.get("provider") if prefs.get("provider") in PROVIDER_OPTIONS else get_default_provider()
     saved_models = prefs.get("model_by_provider") if isinstance(prefs.get("model_by_provider"), dict) else {}
     defaults = {
         "ui_lang": saved_lang,
+        "ui_lang_follow": bool(follow),
         "theme": prefs.get("theme") if prefs.get("theme") in {"light", "dark"} else "light",
+        "uploader_nonce": 0,
+        "picked_name": None,
+        "picked_size": 0,
+        "picked_bytes": None,
+        "translate_note": None,
+        "source_type": "file",
+        "content_mode": "document",
         "page": "translate",
         "settings_pane": "appearance",
         "provider": saved_provider,
@@ -116,7 +129,10 @@ if _qp.get("theme") in {"light", "dark"}:
     st.session_state.theme = str(_qp.get("theme"))
 if _qp.get("pane") in SETTINGS_PANES:
     st.session_state.settings_pane = str(_qp.get("pane"))
-st.markdown(css_for(st.session_state.theme), unsafe_allow_html=True)
+st.markdown(
+    css_for(st.session_state.theme, st.session_state.page, st.session_state.settings_pane),
+    unsafe_allow_html=True,
+)
 
 
 def _sync_query() -> None:
@@ -138,6 +154,7 @@ def _persist_prefs() -> None:
     save_prefs(
         theme=st.session_state.theme,
         ui_lang=st.session_state.ui_lang,
+        ui_lang_follow=bool(st.session_state.get("ui_lang_follow", True)),
         provider=st.session_state.provider,
         model_by_provider=dict(st.session_state.model_by_provider or {}),
         concurrency=st.session_state.concurrency,
@@ -153,10 +170,29 @@ def _set_theme(theme: str) -> None:
     st.rerun()
 
 
-def _set_lang(lang: str) -> None:
+def _set_lang(lang: str, *, follow: bool = False) -> None:
     st.session_state.ui_lang = lang
+    st.session_state.ui_lang_follow = follow
     _persist_prefs()
     st.rerun()
+
+
+def _icon_data_uri() -> str:
+    raw = ICON_PATH.read_bytes() if ICON_PATH.is_file() else b""
+    return "data:image/png;base64," + base64.b64encode(raw).decode("ascii") if raw else ""
+
+
+def _fmt_size(n: int) -> str:
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        return f"{n / 1024:.0f} KB"
+    return f"{n / (1024 * 1024):.1f} MB"
+
+
+def _quiet_update(key: str = "update_quiet") -> None:
+    if st.button(L("update.button"), key=key):
+        _show_overlay_result(_run_overlay())
 
 
 def _target_lang() -> str:
@@ -193,69 +229,83 @@ def _show_overlay_result(out: str) -> None:
         st.info(L("update.failed"))
 
 
-def render_hero() -> None:
-    st.markdown('<div class="sfts-hero">', unsafe_allow_html=True)
-    if ICON_PATH.is_file():
-        left, mid, right = st.columns([1.4, 1.2, 1.4])
-        with mid:
-            st.image(str(ICON_PATH), width=72)
-    st.markdown(f'<div class="sfts-product">{L("app.title")}</div>', unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
-def render_tabs() -> None:
-    st.markdown('<div class="sfts-tabs">', unsafe_allow_html=True)
-    spacer, t1, t2, spacer2 = st.columns([1.2, 1, 1, 1.2])
-    with t1:
-        if st.button(
-            L("nav.translate"),
-            type="primary" if st.session_state.page == "translate" else "secondary",
-            use_container_width=True,
-            key="nav_translate",
-        ):
+def render_chrome() -> None:
+    _pad, tab_t, tab_s, _gap, sun, tog, moon = st.columns([1.8, 0.7, 0.7, 1.5, 0.28, 0.72, 0.28])
+    with tab_t:
+        if st.button(L("nav.translate"), key="nav_translate"):
             _go("translate")
-    with t2:
-        if st.button(
-            L("nav.settings"),
-            type="primary" if st.session_state.page == "settings" else "secondary",
-            use_container_width=True,
-            key="nav_settings",
-        ):
+    with tab_s:
+        if st.button(L("nav.settings"), key="nav_settings"):
             _go("settings")
-    st.markdown("</div>", unsafe_allow_html=True)
+    dark = st.session_state.theme == "dark"
+    with sun:
+        st.markdown('<div class="sfts-sunmoon">☀</div>', unsafe_allow_html=True)
+    with tog:
+        knob = "  ●" if dark else "●  "
+        if st.button(knob, key="theme_toggle"):
+            _set_theme("light" if dark else "dark")
+    with moon:
+        st.markdown('<div class="sfts-sunmoon">☾</div>', unsafe_allow_html=True)
+
+    if st.session_state.page != "translate":
+        return
+    uri = _icon_data_uri()
+    img = f'<img src="{uri}" width="88" height="88" alt="">' if uri else ""
+    st.markdown(
+        f'<div class="sfts-hero">{img}<div class="sfts-product">{L("app.title")}</div>'
+        f'<div class="sfts-tagline">{L("app.tagline")}</div></div>',
+        unsafe_allow_html=True,
+    )
+    _quiet_update("update_hero")
 
 
 def render_appearance_pane() -> None:
     langs = available_languages()
-    lang_labels = {code: language_display_name(code, st.session_state.ui_lang) for code in langs}
+    detected = detect_ui_language(_browser_accept_language())
+    if detected not in langs:
+        detected = FALLBACK_LANG if FALLBACK_LANG in langs else langs[0]
+    now_name = language_display_name(detected, st.session_state.ui_lang)
+    st.markdown(f'<div class="sfts-pane-title">{L("card.appearance")}</div>', unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown(f"### {L('card.appearance')}")
-        theme = st.radio(
-            L("card.theme"),
-            options=["light", "dark"],
-            index=0 if st.session_state.theme == "light" else 1,
-            format_func=lambda x: L("theme.light") if x == "light" else L("theme.dark"),
-            horizontal=True,
-            key="theme_radio",
-        )
-        if theme != st.session_state.theme:
+        lab, ctl = st.columns([1.1, 2.2], vertical_alignment="center")
+        with lab:
+            st.markdown(f'<div class="sfts-row-label">{L("card.theme")}</div>', unsafe_allow_html=True)
+        with ctl:
+            theme = st.segmented_control(
+                L("card.theme"),
+                options=["light", "dark"],
+                default=st.session_state.theme,
+                format_func=lambda x: L("theme.light") if x == "light" else L("theme.dark"),
+                key="theme_seg",
+                label_visibility="collapsed",
+            )
+        if theme in {"light", "dark"} and theme != st.session_state.theme:
             _set_theme(theme)
-        current = st.session_state.ui_lang if st.session_state.ui_lang in langs else FALLBACK_LANG
+        st.markdown('<hr class="sfts-divider">', unsafe_allow_html=True)
+        lang_labels = {code: language_display_name(code, st.session_state.ui_lang) for code in langs}
+        options = ["__system__"] + langs
+        current = "__system__" if st.session_state.get("ui_lang_follow") else (
+            st.session_state.ui_lang if st.session_state.ui_lang in langs else "__system__"
+        )
         chosen = st.selectbox(
             L("sidebar.language"),
-            options=langs,
-            index=langs.index(current) if current in langs else 0,
-            format_func=lambda c: lang_labels.get(c, c),
+            options=options,
+            index=options.index(current) if current in options else 0,
+            format_func=lambda c: L("lang.follow_system", name=now_name) if c == "__system__" else lang_labels.get(c, c),
             key="ui_lang_select",
         )
-        if chosen != st.session_state.ui_lang:
-            _set_lang(chosen)
-        st.markdown(f'<div class="sfts-muted">{L("card.lang_os")}</div>', unsafe_allow_html=True)
+        if chosen == "__system__":
+            if not st.session_state.get("ui_lang_follow") or st.session_state.ui_lang != detected:
+                _set_lang(detected, follow=True)
+        elif chosen != st.session_state.ui_lang or st.session_state.get("ui_lang_follow"):
+            _set_lang(chosen, follow=False)
+        st.markdown(f'<div class="sfts-muted">{L("card.lang_fallback")}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sfts-lang-count">🌐  {L("card.lang_count")}</div>', unsafe_allow_html=True)
 
 
 def render_translation_pane() -> None:
+    st.markdown(f'<div class="sfts-pane-title">{L("card.translation")}</div>', unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown(f"### {L('card.translation')}")
         target_labels = {c: L(f"target.{c}") for c in TARGET_CODES if c != "other"}
         target_labels["other"] = L("target.other")
         st.selectbox(
@@ -338,8 +388,8 @@ def _key_label(fallback: str, locale_key: str) -> str:
 
 
 def render_keys_pane() -> None:
+    st.markdown(f'<div class="sfts-pane-title">{L("card.keys")}</div>', unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown(f"### {L('card.keys')}")
         grok = probe_grok_cli()
         grok_label = _key_label("Official Grok CLI", "keys.grok_cli")
         if grok.usable:
@@ -426,8 +476,8 @@ def render_keys_pane() -> None:
 
 
 def render_glossary_pane() -> None:
+    st.markdown(f'<div class="sfts-pane-title">{L("card.glossary")}</div>', unsafe_allow_html=True)
     with st.container(border=True):
-        st.markdown(f"### {L('card.glossary')}")
         projects = list_projects()
         if "default" not in projects:
             ensure_project("default")
@@ -479,23 +529,17 @@ def render_glossary_pane() -> None:
 def render_settings() -> None:
     rail, pane = st.columns([1, 3.2])
     labels = {
-        "appearance": L("card.appearance"),
-        "translation": L("card.translation"),
-        "keys": L("card.keys"),
-        "glossary": L("card.glossary"),
+        "appearance": "🖥  " + L("card.appearance"),
+        "translation": "文  " + L("card.translation"),
+        "keys": "🔑  " + L("card.keys"),
+        "glossary": "📖  " + L("card.glossary"),
     }
     with rail:
-        st.markdown('<div class="sfts-rail">', unsafe_allow_html=True)
         for pane_id in SETTINGS_PANES:
             active = st.session_state.settings_pane == pane_id
-            if st.button(
-                labels[pane_id],
-                type="primary" if active else "secondary",
-                use_container_width=True,
-                key=f"pane_{pane_id}",
-            ):
+            if st.button(labels[pane_id], use_container_width=True, key=f"pane_{pane_id}"):
                 _go("settings", pane_id)
-        st.markdown("</div>", unsafe_allow_html=True)
+        _quiet_update("update_settings")
     with pane:
         current = st.session_state.settings_pane
         if current == "appearance":
@@ -523,140 +567,233 @@ def _has_source(source_type: str) -> bool:
     return st.session_state.get("zip_file") is not None
 
 
-def render_translate() -> None:
-    source_type = st.radio(
-        L("main.source_type"),
-        options=["file", "folder", "zip"],
-        format_func=lambda x: {
-            "file": L("main.source_file"),
-            "folder": L("main.source_folder"),
-            "zip": L("main.source_zip"),
-        }[x],
-        horizontal=True,
-        key="source_type",
-    )
-    content_mode = st.radio(
-        L("main.content_mode"),
-        options=["document", "game"],
-        format_func=lambda x: {
-            "document": L("main.mode_document"),
-            "game": L("main.mode_game"),
-        }[x],
-        horizontal=True,
-        key="content_mode",
-    )
-    game_mode = content_mode == "game"
-    status = st.empty()
-    translate_kw = dict(
-        target_lang=_target_lang(),
-        source_lang=_source_lang(),
-        project=st.session_state.project,
-        provider_choice=st.session_state.provider,
-        game_mode=game_mode,
-        model=resolve_model(st.session_state.provider, st.session_state.get("model")),
-        concurrency=clamp_concurrency(st.session_state.concurrency),
-    )
-    uploaded = None
-    zipped = None
+def _clear_picked() -> None:
+    st.session_state.picked_name = None
+    st.session_state.picked_size = 0
+    st.session_state.picked_bytes = None
+    st.session_state.source_preview = None
+    st.session_state.result_text = None
+    st.session_state.result_path = None
+    st.session_state.translate_note = None
+    st.session_state.uploader_nonce = int(st.session_state.get("uploader_nonce") or 0) + 1
+    st.rerun()
 
-    if source_type == "file":
-        uploaded = st.file_uploader(L("main.upload"), type=UPLOAD_TYPES)
-        if uploaded is None:
-            status.info(L("main.status_ready"))
-        else:
-            suffix = Path(uploaded.name).suffix.lower()
-            if suffix == ".zip":
-                status.info(L("main.zip_use_zip_mode"))
-            elif not is_supported(uploaded.name) and suffix not in SCRIPT_SUFFIXES:
-                status.error(L("error.unsupported_format"))
+
+def _show_file_chip() -> None:
+    name = st.session_state.picked_name
+    size = _fmt_size(int(st.session_state.picked_size or 0))
+    left, right = st.columns([8, 1])
+    with left:
+        st.markdown(
+            f'<div class="sfts-filechip"><span class="sfts-filechip-ico">📄</span>'
+            f'<span class="sfts-filechip-name">{name}</span>'
+            f'<span class="sfts-filechip-size">{size}</span></div>',
+            unsafe_allow_html=True,
+        )
+    with right:
+        if st.button("✕", key="clear_picked"):
+            _clear_picked()
+
+
+def _seg_row(label: str, control):
+    lab, ctl = st.columns([1.15, 2.35], vertical_alignment="center")
+    with lab:
+        st.markdown(f'<div class="sfts-row-label">{label}</div>', unsafe_allow_html=True)
+    with ctl:
+        return control()
+
+
+def render_translate() -> None:
+    with st.container(border=True):
+        source_type = _seg_row(
+            L("main.source_type"),
+            lambda: st.segmented_control(
+                L("main.source_type"),
+                options=["file", "folder", "zip"],
+                format_func=lambda x: {
+                    "file": "📄  " + L("main.seg_file"),
+                    "folder": "📁  " + L("main.seg_folder"),
+                    "zip": "🗜  " + L("main.seg_zip"),
+                }[x],
+                key="source_type",
+                required=True,
+            ),
+        ) or "file"
+        content_mode = _seg_row(
+            L("main.content_mode"),
+            lambda: st.segmented_control(
+                L("main.content_mode"),
+                options=["document", "game"],
+                format_func=lambda x: {
+                    "document": "💬  " + L("main.seg_doc"),
+                    "game": "🎮  " + L("main.seg_game"),
+                }[x],
+                key="content_mode",
+                required=True,
+            ),
+        ) or "document"
+        game_mode = content_mode == "game"
+        status = st.empty()
+        translate_kw = dict(
+            target_lang=_target_lang(),
+            source_lang=_source_lang(),
+            project=st.session_state.project,
+            provider_choice=st.session_state.provider,
+            game_mode=game_mode,
+            model=resolve_model(st.session_state.provider, st.session_state.get("model")),
+            concurrency=clamp_concurrency(st.session_state.concurrency),
+        )
+        nonce = int(st.session_state.get("uploader_nonce") or 0)
+        has_source = False
+
+        if source_type == "file":
+            if not st.session_state.picked_name:
+                uploaded = st.file_uploader(
+                    L("main.upload"),
+                    type=UPLOAD_TYPES,
+                    key=f"file_up_{nonce}",
+                    label_visibility="collapsed",
+                )
+                if uploaded is not None:
+                    st.session_state.picked_name = uploaded.name
+                    st.session_state.picked_size = int(getattr(uploaded, "size", 0) or len(uploaded.getvalue()))
+                    st.session_state.picked_bytes = uploaded.getvalue()
+                    st.rerun()
             else:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                    tmp.write(uploaded.getvalue())
-                    tmp_path = Path(tmp.name)
-                try:
-                    preview = tmp_path.read_text(encoding="utf-8", errors="replace")[:4000]
-                except Exception:
-                    preview = L("main.binary_preview")
-                st.session_state.source_preview = preview
-                if st.button(L("main.translate_btn"), type="primary", use_container_width=True):
-                    if not _need_key(status):
-                        status.info(L("main.status_translating"))
+                _show_file_chip()
+                has_source = True
+                name = st.session_state.picked_name
+                suffix = Path(name).suffix.lower()
+                raw = st.session_state.picked_bytes or b""
+                if suffix == ".zip":
+                    status.error(L("main.zip_use_zip_mode"))
+                    has_source = False
+                elif not is_supported(name) and suffix not in SCRIPT_SUFFIXES:
+                    status.error(L("error.unsupported_format"))
+                    has_source = False
+                else:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                        tmp.write(raw)
+                        tmp_path = Path(tmp.name)
+                    try:
+                        preview = tmp_path.read_text(encoding="utf-8", errors="replace")[:4000]
+                    except Exception:
+                        preview = L("main.binary_preview")
+                    st.session_state.source_preview = preview
+                    if has_source:
+                        go = st.button(
+                            L("main.translate_btn"),
+                            type="primary",
+                            use_container_width=True,
+                            key="start_translate",
+                        )
+                        if go and not _need_key(status):
+                            try:
+                                out_name = Path(name).stem + f".{_target_lang()}" + suffix
+                                out_path = outputs_dir() / out_name
+                                translate_single_file(tmp_path, out_path, **translate_kw)
+                                st.session_state.result_path = str(out_path)
+                                if out_path.suffix.lower() not in {".docx", ".pdf", ".xlsx"}:
+                                    st.session_state.result_text = out_path.read_text(encoding="utf-8", errors="replace")
+                                else:
+                                    st.session_state.result_text = L("main.saved_binary")
+                                st.session_state.translate_note = L("main.status_done")
+                            except TranslationError as e:
+                                status.error(L("main.status_error", msg=redact_secrets(str(e))))
+                            except Exception as e:
+                                status.error(L("main.status_error", msg=redact_secrets(str(e))))
+
+        elif source_type == "folder":
+            st.caption(L("main.folder_hint"))
+            folder_path = st.text_input(L("main.folder_path"), value="", label_visibility="collapsed")
+            has_source = bool(folder_path.strip())
+            if has_source:
+                go = st.button(
+                    L("main.translate_btn"),
+                    type="primary",
+                    use_container_width=True,
+                    key="start_translate",
+                )
+                if go:
+                    root = Path(folder_path).expanduser()
+                    if not root.is_dir():
+                        status.error(L("main.folder_missing"))
+                    elif not _need_key(status):
                         try:
-                            out_name = Path(uploaded.name).stem + f".{_target_lang()}" + suffix
-                            out_path = outputs_dir() / out_name
-                            translate_single_file(tmp_path, out_path, **translate_kw)
-                            st.session_state.result_path = str(out_path)
-                            if out_path.suffix.lower() not in {".docx", ".pdf", ".xlsx"}:
-                                st.session_state.result_text = out_path.read_text(encoding="utf-8", errors="replace")
-                            else:
-                                st.session_state.result_text = L("main.saved_binary")
-                            status.success(L("main.status_done"))
+                            report = translate_tree(root, job_name=root.name, **translate_kw)
+                            st.session_state.batch_report = report
+                            st.session_state.translate_note = L(
+                                "main.batch_done", n=len(report.written), k=len(report.skipped)
+                            )
                         except TranslationError as e:
                             status.error(L("main.status_error", msg=redact_secrets(str(e))))
                         except Exception as e:
                             status.error(L("main.status_error", msg=redact_secrets(str(e))))
 
-    elif source_type == "folder":
-        st.caption(L("main.folder_hint"))
-        folder_path = st.text_input(L("main.folder_path"), value="")
-        if folder_path.strip() and st.button(L("main.translate_btn"), type="primary", use_container_width=True):
-            root = Path(folder_path).expanduser()
-            if not root.is_dir():
-                status.error(L("main.folder_missing"))
-            elif not _need_key(status):
-                status.info(L("main.status_translating"))
-                try:
-                    report = translate_tree(root, job_name=root.name, **translate_kw)
-                    st.session_state.batch_report = report
-                    status.success(L("main.batch_done", n=len(report.written), k=len(report.skipped)))
-                except TranslationError as e:
-                    status.error(L("main.status_error", msg=redact_secrets(str(e))))
-                except Exception as e:
-                    status.error(L("main.status_error", msg=redact_secrets(str(e))))
+        else:
+            if not st.session_state.picked_name:
+                zipped = st.file_uploader(
+                    L("main.zip_upload"),
+                    type=["zip"],
+                    key=f"zip_up_{nonce}",
+                    label_visibility="collapsed",
+                )
+                if zipped is not None:
+                    st.session_state.picked_name = zipped.name
+                    st.session_state.picked_size = int(getattr(zipped, "size", 0) or len(zipped.getvalue()))
+                    st.session_state.picked_bytes = zipped.getvalue()
+                    st.rerun()
+            else:
+                _show_file_chip()
+                has_source = True
+                go = st.button(
+                    L("main.translate_btn"),
+                    type="primary",
+                    use_container_width=True,
+                    key="start_translate",
+                )
+                if go and not _need_key(status):
+                    try:
+                        with tempfile.TemporaryDirectory(prefix="sfts_zip_") as tmp:
+                            zpath = Path(tmp) / "upload.zip"
+                            zpath.write_bytes(st.session_state.picked_bytes or b"")
+                            report = translate_zip(
+                                zpath,
+                                Path(tmp) / "tree",
+                                job_name=Path(st.session_state.picked_name).stem,
+                                **translate_kw,
+                            )
+                            st.session_state.batch_report = report
+                            st.session_state.translate_note = L(
+                                "main.batch_done", n=len(report.written), k=len(report.skipped)
+                            )
+                    except TranslationError as e:
+                        status.error(L("main.status_error", msg=redact_secrets(str(e))))
+                    except Exception as e:
+                        status.error(L("main.status_error", msg=redact_secrets(str(e))))
 
-    else:
-        zipped = st.file_uploader(L("main.zip_upload"), type=["zip"])
-        if zipped is None:
-            status.info(L("main.status_ready_zip"))
-        elif st.button(L("main.translate_btn"), type="primary", use_container_width=True):
-            if not _need_key(status):
-                status.info(L("main.status_translating"))
-                try:
-                    with tempfile.TemporaryDirectory(prefix="sfts_zip_") as tmp:
-                        zpath = Path(tmp) / "upload.zip"
-                        zpath.write_bytes(zipped.getvalue())
-                        report = translate_zip(
-                            zpath,
-                            Path(tmp) / "tree",
-                            job_name=Path(zipped.name).stem,
-                            **translate_kw,
-                        )
-                        st.session_state.batch_report = report
-                        status.success(L("main.batch_done", n=len(report.written), k=len(report.skipped)))
-                except TranslationError as e:
-                    status.error(L("main.status_error", msg=redact_secrets(str(e))))
-                except Exception as e:
-                    status.error(L("main.status_error", msg=redact_secrets(str(e))))
+    if st.session_state.translate_note:
+        st.markdown(f'<div class="sfts-ok">{st.session_state.translate_note}</div>', unsafe_allow_html=True)
 
-    show_src = bool(st.session_state.source_preview) and source_type == "file" and uploaded is not None
+    show_src = bool(st.session_state.source_preview) and source_type == "file" and st.session_state.picked_name
     show_out = bool(st.session_state.result_text) and source_type == "file"
     if show_src or show_out:
         c1, c2 = st.columns(2)
         if show_src:
             with c1:
                 with st.container(border=True):
-                    st.subheader(L("main.preview_src"))
+                    st.markdown(f"**{L('main.preview_src')}**")
                     st.text_area("src", value=st.session_state.source_preview, height=220, label_visibility="collapsed")
         if show_out:
             with c2:
                 with st.container(border=True):
-                    st.subheader(L("main.preview_out"))
+                    st.markdown(f"**{L('main.preview_out')}**")
                     out = (st.session_state.result_text or "")[:4000]
                     st.text_area("out", value=out, height=220, label_visibility="collapsed")
                     if st.session_state.result_path and Path(st.session_state.result_path).is_file():
                         data = Path(st.session_state.result_path).read_bytes()
                         st.download_button(
-                            L("main.download"),
+                            L("main.download") + "  " + Path(st.session_state.result_path).name,
                             data=data,
                             file_name=Path(st.session_state.result_path).name,
                             mime="application/octet-stream",
@@ -665,22 +802,16 @@ def render_translate() -> None:
     report = st.session_state.batch_report
     if report is not None:
         if report.written:
-            st.subheader(L("main.done_list"))
+            st.markdown(f"**{L('main.done_list')}**")
             for item in report.written:
                 st.write(f"{item.rel} → {item.out}")
         if report.skipped:
-            st.subheader(L("main.skip_list"))
+            st.markdown(f"**{L('main.skip_list')}**")
             for item in report.skipped:
                 st.write(f"{item.rel} — {redact_secrets(item.skipped or item.error)}")
 
-    st.markdown('<div class="sfts-update-link">', unsafe_allow_html=True)
-    if st.button(L("update.button"), key="update_quiet"):
-        _show_overlay_result(_run_overlay())
-    st.markdown("</div>", unsafe_allow_html=True)
 
-
-render_hero()
-render_tabs()
+render_chrome()
 _sync_query()
 if st.session_state.page == "settings":
     render_settings()

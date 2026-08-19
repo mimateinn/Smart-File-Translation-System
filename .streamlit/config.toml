@@ -1,5 +1,13 @@
 [client]
 toolbarMode = "viewer"
+showSidebarNavigation = false
 
 [browser]
 gatherUsageStats = false
+
+[theme]
+primaryColor = "#14b8a6"
+backgroundColor = "#f4f6f7"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#1f2937"
+font = "sans serif"

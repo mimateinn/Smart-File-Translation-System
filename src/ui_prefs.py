@@ -53,6 +53,8 @@ def load_prefs() -> dict[str, Any]:
             out["model_by_provider"] = cleaned
     if "concurrency" in data:
         out["concurrency"] = clamp_concurrency(data.get("concurrency"))
+    if "ui_lang_follow" in data:
+        out["ui_lang_follow"] = bool(data.get("ui_lang_follow"))
     return out
 
 
@@ -60,6 +62,7 @@ def save_prefs(
     *,
     theme: str | None = None,
     ui_lang: str | None = None,
+    ui_lang_follow: bool | None = None,
     provider: str | None = None,
     model_by_provider: dict[str, str] | None = None,
     concurrency: int | None = None,
@@ -69,6 +72,8 @@ def save_prefs(
         current["theme"] = theme
     if ui_lang:
         current["ui_lang"] = ui_lang
+    if ui_lang_follow is not None:
+        current["ui_lang_follow"] = bool(ui_lang_follow)
     if provider in _PROVIDERS:
         current["provider"] = provider
     if model_by_provider is not None:

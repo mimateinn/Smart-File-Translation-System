@@ -222,3 +222,7 @@ __marimo__/
 
 # Local UI prefs (theme / model / concurrency). Never secrets.
 projects/.sfts-ui.json
+
+# Live UI captures. Never commit.
+.playwright-mcp/
+sfts-live-*.png
