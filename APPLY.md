@@ -16,7 +16,8 @@
 - `.env.example` — Template for provider keys and options; no real secrets.
 - `.gitignore` — Official Python gitignore from the empty public repo (includes `.env`).
 - `requirements.txt` — Runtime dependencies for Streamlit UI, extractors, and both providers.
-- `app.py` — Streamlit entry point: 12-language UI, upload, translate, glossary editor, download.
+- `app.py` — Streamlit shell: top nav 翻譯 | 設定, slim translate workspace, four-card Settings page (no sidebar dump).
+- `src/theme.py` — Local light/dark CSS. No remote font or script fetch.
 - `src/__init__.py` — Package marker and version string.
 - `src/config.py` — Loads `.env`, exposes provider availability, paths, and chunk size.
 - `src/i18n.py` — Message catalog loader; adding a language means adding one JSON file.
