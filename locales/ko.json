@@ -1,7 +1,7 @@
 {
   "app.title": "스마트 파일 번역",
   "app.subtitle": "다중 API 라우팅, 용어집 메모리, 12개 UI 언어를 지원하는 AI 문서·파일 현지화 번역 시스템.",
-  "app.contact": "연락처: laevataincheng@gmail.com",
+  "app.contact": "이 컴퓨터에서만 실행됩니다.",
   "sidebar.section_settings": "설정",
   "sidebar.language": "인터페이스 언어",
   "sidebar.provider": "API 제공자",
@@ -67,5 +67,5 @@
   "target.th": "태국어",
   "target.id": "인도네시아어",
   "target.other": "기타 (코드 입력)",
-  "about.footer": "스마트 파일 번역 시스템 · 로컬 전용 · 저장소에 비밀 없음 · 연락 laevataincheng@gmail.com"
+  "about.footer": "스마트 파일 번역 시스템 · 로컬 전용 · 저장소에 비밀 없음"
 }

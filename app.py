@@ -181,7 +181,6 @@ with st.sidebar:
 # ---------------------------------------------------------------------------
 st.title(L("app.title"))
 st.caption(L("app.subtitle"))
-st.caption(L("app.contact"))
 
 uploaded = st.file_uploader(
     L("main.upload"),

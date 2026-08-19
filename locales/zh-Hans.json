@@ -1,7 +1,7 @@
 {
   "app.title": "智能文件翻译",
   "app.subtitle": "AI 驱动的文档与文件本地化翻译系统，支持多 API 路由、术语表记忆与 12 种界面语言。",
-  "app.contact": "联系：laevataincheng@gmail.com",
+  "app.contact": "只在这台电脑上运行。",
   "sidebar.section_settings": "设置",
   "sidebar.language": "界面语言",
   "sidebar.provider": "API 提供商",
@@ -67,5 +67,5 @@
   "target.th": "泰文",
   "target.id": "印尼文",
   "target.other": "其他（输入代码）",
-  "about.footer": "智能文件翻译系统 · 仅本地运行 · 仓库不含密钥 · 联系 laevataincheng@gmail.com"
+  "about.footer": "智能文件翻译系统 · 仅本地运行 · 仓库不含密钥"
 }

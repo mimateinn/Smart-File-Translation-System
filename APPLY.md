@@ -1,7 +1,11 @@
 # APPLY — path checklist (one sentence each)
 
-- `README.md` — English project overview, features, quick start, configuration, contact.
-- `README.zh-Hant.md` — Traditional Chinese project overview matching the English README.
+- `README.md` — Bilingual public listing (English on top, Traditional Chinese below), child-friendly steps, changelog.
+- `README.zh-Hant.md` — Short pointer to README.md.
+- `icon.png` — App icon shown at the top of README.md.
+- `start.bat` — Windows one-click starter (makes a local folder, installs, copies .env if missing, opens the app).
+- `start.sh` — Mac/Linux starter with the same steps as start.bat.
+- `scripts/build-portable.sh` — Local zip recipe only. Do not attach the zip to a GitHub Release until Maid approves a tag.
 - `.env.example` — Template for provider keys and options; no real secrets.
 - `.gitignore` — Official Python gitignore from the empty public repo (includes `.env`).
 - `requirements.txt` — Runtime dependencies for Streamlit UI, extractors, and both providers.

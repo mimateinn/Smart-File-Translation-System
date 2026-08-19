@@ -1,7 +1,7 @@
 {
   "app.title": "智能檔案翻譯",
   "app.subtitle": "AI 驅動的文件與檔案在地化翻譯系統，支援多 API 路由、用語表記憶與 12 種介面語言。",
-  "app.contact": "聯絡：laevataincheng@gmail.com",
+  "app.contact": "只在這台電腦上執行。",
   "sidebar.section_settings": "設定",
   "sidebar.language": "介面語言",
   "sidebar.provider": "API 供應商",
@@ -67,5 +67,5 @@
   "target.th": "泰文",
   "target.id": "印尼文",
   "target.other": "其他（輸入代碼）",
-  "about.footer": "智能檔案翻譯系統 · 僅本機執行 · 倉庫不含密鑰 · 聯絡 laevataincheng@gmail.com"
+  "about.footer": "智能檔案翻譯系統 · 僅本機執行 · 倉庫不含密鑰"
 }

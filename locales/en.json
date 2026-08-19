@@ -1,7 +1,7 @@
 {
   "app.title": "Smart File Translation",
   "app.subtitle": "AI-powered document & file localization with multi-API routing, glossary memory, and 12 UI languages.",
-  "app.contact": "Contact: laevataincheng@gmail.com",
+  "app.contact": "Runs on this computer only.",
   "sidebar.section_settings": "Settings",
   "sidebar.language": "Interface language",
   "sidebar.provider": "API provider",
@@ -67,5 +67,5 @@
   "target.th": "Thai",
   "target.id": "Indonesian",
   "target.other": "Other (type code)",
-  "about.footer": "Smart File Translation System · Local only · No secrets in repo · Contact laevataincheng@gmail.com"
+  "about.footer": "Smart File Translation System · Local only · No secrets in repo"
 }

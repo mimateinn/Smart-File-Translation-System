@@ -1,7 +1,7 @@
 {
   "app.title": "スマートファイル翻訳",
   "app.subtitle": "マルチAPIルーティング、用語集メモリ、12のUI言語に対応したAI文書・ファイル翻訳システム。",
-  "app.contact": "連絡先：laevataincheng@gmail.com",
+  "app.contact": "このパソコンでのみ動きます。",
   "sidebar.section_settings": "設定",
   "sidebar.language": "インターフェース言語",
   "sidebar.provider": "APIプロバイダー",
@@ -67,5 +67,5 @@
   "target.th": "タイ語",
   "target.id": "インドネシア語",
   "target.other": "その他（コード入力）",
-  "about.footer": "スマートファイル翻訳システム · ローカルのみ · リポジトリに秘密情報なし · 連絡 laevataincheng@gmail.com"
+  "about.footer": "スマートファイル翻訳システム · ローカルのみ · リポジトリに秘密情報なし"
 }

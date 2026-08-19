@@ -1,7 +1,7 @@
 {
   "app.title": "Traducción Inteligente de Archivos",
   "app.subtitle": "Sistema de traducción y localización de documentos con enrutamiento multi-API, memoria de glosario y 12 idiomas de interfaz.",
-  "app.contact": "Contacto: laevataincheng@gmail.com",
+  "app.contact": "Solo funciona en este equipo.",
   "sidebar.section_settings": "Configuración",
   "sidebar.language": "Idioma de la interfaz",
   "sidebar.provider": "Proveedor de API",
@@ -67,5 +67,5 @@
   "target.th": "Tailandés",
   "target.id": "Indonesio",
   "target.other": "Otro (escribir código)",
-  "about.footer": "Sistema de Traducción Inteligente de Archivos · Solo local · Sin secretos en el repositorio · Contacto laevataincheng@gmail.com"
+  "about.footer": "Sistema de Traducción Inteligente de Archivos · Solo local · Sin secretos en el repositorio"
 }
