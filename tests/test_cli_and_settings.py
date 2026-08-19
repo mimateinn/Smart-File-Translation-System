@@ -145,6 +145,10 @@ def test_v2_chrome_contract() -> None:
     assert "st-key-nav_translate" in theme
     assert "stFileUploaderDropzoneInstructions" in theme
     assert "stAppDeployButton" in theme
+    from src.theme import css_for
+    css = css_for("light", "settings", "appearance")
+    assert "data:image/svg+xml" in css
+    assert "inset 3px 0 0 #14b8a6" in css
     app = (root / "app.py").read_text(encoding="utf-8")
     assert "sfts-hero" in app
     assert "sfts-filechip" in app
@@ -154,6 +158,11 @@ def test_v2_chrome_contract() -> None:
     maker = (root / "scripts" / "make_icon.py").read_text(encoding="utf-8")
     assert (root / "scripts" / "make_icon.py").is_file()
     assert "No letters" in maker
+    icons = (root / "src" / "icons.py").read_text(encoding="utf-8")
+    assert "<svg" in icons
+    for ch in "☀☾📄📁🗜💬🎮🔑📖🖥🌐✕":
+        assert ch not in app
+        assert ch not in icons
 
 
 def test_locales_hide_subscription_copy() -> None:

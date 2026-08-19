@@ -6,6 +6,26 @@ rules target widget keys (``.st-key-*`` / ``[class*="st-key-"]``).
 
 from __future__ import annotations
 
+from src.icons import MASKS
+
+
+def _mask_icon(selector: str, name: str, margin: str = "0 8px 0 0") -> str:
+    uri = MASKS[name]
+    return f"""
+{selector}::before {{
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin: {margin};
+  background-color: currentColor;
+  -webkit-mask: url("{uri}") center / contain no-repeat;
+  mask: url("{uri}") center / contain no-repeat;
+}}
+"""
+
+
 _SHARED = """
 html, body, [class*="css"], .stApp, .stMarkdown, button, input, label {
   font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Noto Sans", sans-serif !important;
@@ -72,9 +92,15 @@ iframe { color-scheme: auto; }
   background: var(--sfts-chip); border: 1px solid var(--sfts-chip-line);
   border-radius: 10px; padding: 0.55rem 0.85rem; margin: 0.15rem 0;
 }
-.sfts-filechip-ico { margin-right: 0.55rem; font-size: 1.15rem; }
 .sfts-filechip-name { font-weight: 600; color: var(--sfts-text); }
 .sfts-filechip-size { color: var(--sfts-muted); font-size: 0.82rem; margin-left: 0.6rem; }
+.sfts-ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; vertical-align: -3px; margin-right: 0.4rem;
+}
+.sfts-ico svg { width: 16px; height: 16px; display: block; }
+.sfts-lang-count .sfts-ico { color: inherit; }
+.sfts-pill-on .sfts-ico, .sfts-pill-off .sfts-ico { margin-right: 0; }
 .sfts-ok {
   background: var(--sfts-ok-bg); color: #047857; border-radius: 10px;
   padding: 0.5rem 0.85rem; font-size: 0.92rem; margin: 0.7rem 0;
@@ -82,16 +108,41 @@ iframe { color-scheme: auto; }
 .sfts-muted { color: var(--sfts-muted); font-size: 0.82rem; }
 .sfts-lang-count { color: #0f766e; font-size: 0.82rem; margin-top: 0.35rem; }
 .sfts-pill-on {
-  display: inline-block; padding: 0.12rem 0.7rem; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.12rem 0.7rem; border-radius: 999px;
   border: 1px solid #14b8a6; color: #0f766e; font-size: 0.85rem;
 }
 .sfts-pill-off {
-  display: inline-block; padding: 0.12rem 0.7rem; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.12rem 0.7rem; border-radius: 999px;
   border: 1px solid var(--sfts-line); color: var(--sfts-muted); font-size: 0.85rem;
 }
 .sfts-footer { text-align: center; color: var(--sfts-muted); font-size: 0.72rem; margin-top: 1.6rem; }
 .sfts-divider { height: 1px; background: var(--sfts-line); margin: 1rem 0; border: 0; }
-.sfts-sunmoon { color: var(--sfts-muted); font-size: 0.95rem; text-align: center; padding-top: 0.35rem; }
+.sfts-sunmoon {
+  color: var(--sfts-muted); text-align: center; padding-top: 0.28rem;
+  display: flex; align-items: center; justify-content: center; height: 28px;
+}
+.sfts-sunmoon .sfts-ico { margin: 0; }
+
+[data-testid="stSelectbox"] { margin-bottom: 0.45rem !important; }
+[data-testid="stSelectbox"] > div,
+[data-baseweb="select"] > div {
+  min-height: 40px !important;
+}
+[data-baseweb="select"] [data-baseweb="inner-input"],
+[data-baseweb="select"] input {
+  min-height: 38px !important;
+  line-height: 1.3 !important;
+}
+[data-baseweb="menu"] li,
+[data-baseweb="menu"] [role="option"] {
+  min-height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
 
 [data-testid="stVerticalBlockBorderWrapper"] {
   background: var(--sfts-card) !important;
@@ -196,9 +247,26 @@ DARK = f"""
 """
 
 
-def _chrome_keys(page: str, pane: str) -> str:
+def _chrome_keys(theme: str, page: str, pane: str) -> str:
     active_tab = "nav_translate" if page == "translate" else "nav_settings"
     active_pane = f"pane_{pane}" if pane else "pane_appearance"
+    knob = "right: 3px; left: auto;" if theme == "dark" else "left: 3px; right: auto;"
+    icons = (
+        _mask_icon('[class*="st-key-pane_appearance"] button', "monitor")
+        + _mask_icon('[class*="st-key-pane_translation"] button', "globe")
+        + _mask_icon('[class*="st-key-pane_keys"] button', "key")
+        + _mask_icon('[class*="st-key-pane_glossary"] button', "book")
+        + _mask_icon('[class*="st-key-source_type"] [data-testid="stButtonGroup"] > :nth-child(1) button', "file", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-source_type"] [data-testid="stButtonGroup"] > button:nth-child(1)', "file", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-source_type"] [data-testid="stButtonGroup"] > :nth-child(2) button', "folder", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-source_type"] [data-testid="stButtonGroup"] > button:nth-child(2)', "folder", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-source_type"] [data-testid="stButtonGroup"] > :nth-child(3) button', "zip", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-source_type"] [data-testid="stButtonGroup"] > button:nth-child(3)', "zip", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-content_mode"] [data-testid="stButtonGroup"] > :nth-child(1) button', "bubble", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-content_mode"] [data-testid="stButtonGroup"] > button:nth-child(1)', "bubble", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-content_mode"] [data-testid="stButtonGroup"] > :nth-child(2) button', "game", "0 6px 0 0")
+        + _mask_icon('[class*="st-key-content_mode"] [data-testid="stButtonGroup"] > button:nth-child(2)', "game", "0 6px 0 0")
+    )
     return f"""
 <style>
 /* Plain text tabs + teal underline (not fat pills) */
@@ -224,17 +292,30 @@ def _chrome_keys(page: str, pane: str) -> str:
   border-bottom: 3px solid #14b8a6 !important;
 }}
 
-/* Sun / moon track */
+/* Sun / moon track — CSS knob, no glyph in the button */
 [class*="st-key-theme_toggle"] button {{
   background: var(--sfts-track) !important;
   border: 1px solid var(--sfts-line) !important;
   border-radius: 999px !important;
-  min-height: 28px !important;
-  height: 28px !important;
+  min-height: 26px !important;
+  height: 26px !important;
+  width: 44px !important;
   box-shadow: none !important;
-  padding: 0 0.55rem !important;
-  color: var(--sfts-text) !important;
-  font-size: 0.78rem !important;
+  padding: 0 !important;
+  position: relative !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}}
+[class*="st-key-theme_toggle"] button::after {{
+  content: "";
+  position: absolute;
+  top: 3px;
+  {knob}
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #14b8a6;
 }}
 
 /* Quiet dotted update link — must not steal the hero */
@@ -255,7 +336,7 @@ def _chrome_keys(page: str, pane: str) -> str:
   padding: 0 !important;
 }}
 
-/* Segmented pills — teal fill when selected */
+/* Segmented pills — even height, teal fill when selected */
 [class*="st-key-source_type"] [data-testid="stButtonGroup"],
 [class*="st-key-content_mode"] [data-testid="stButtonGroup"],
 [class*="st-key-theme_seg"] [data-testid="stButtonGroup"],
@@ -267,6 +348,8 @@ def _chrome_keys(page: str, pane: str) -> str:
   border-radius: 999px !important;
   padding: 3px !important;
   gap: 2px !important;
+  display: flex !important;
+  align-items: stretch !important;
 }}
 [class*="st-key-source_type"] button,
 [class*="st-key-content_mode"] button,
@@ -278,6 +361,14 @@ def _chrome_keys(page: str, pane: str) -> str:
   border-radius: 999px !important;
   color: var(--sfts-muted) !important;
   font-weight: 500 !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 1 0 !important;
+  white-space: nowrap !important;
 }}
 [class*="st-key-source_type"] button[aria-pressed="true"],
 [class*="st-key-source_type"] button[aria-checked="true"],
@@ -296,7 +387,13 @@ def _chrome_keys(page: str, pane: str) -> str:
   color: #ffffff !important;
 }}
 
-/* Settings rail */
+/* Settings rail: even rows; icon + label inside the pill, no overlap */
+[class*="st-key-pane_appearance"],
+[class*="st-key-pane_translation"],
+[class*="st-key-pane_keys"],
+[class*="st-key-pane_glossary"] {{
+  margin: 0 0 6px 0 !important;
+}}
 [class*="st-key-pane_appearance"] button,
 [class*="st-key-pane_translation"] button,
 [class*="st-key-pane_keys"] button,
@@ -304,18 +401,38 @@ def _chrome_keys(page: str, pane: str) -> str:
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
   justify-content: flex-start !important;
   text-align: left !important;
   border-radius: 10px !important;
   color: var(--sfts-text) !important;
-  border-left: 3px solid transparent !important;
+  width: 100% !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 0 12px 0 12px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  gap: 0 !important;
+}}
+[class*="st-key-pane_appearance"] button p,
+[class*="st-key-pane_translation"] button p,
+[class*="st-key-pane_keys"] button p,
+[class*="st-key-pane_glossary"] button p {{
+  margin: 0 !important;
+  line-height: 1.2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }}
 [class*="st-key-{active_pane}"] button {{
   background: var(--sfts-rail-on) !important;
-  border-left: 3px solid #14b8a6 !important;
+  box-shadow: inset 3px 0 0 #14b8a6 !important;
   color: #0f766e !important;
   font-weight: 600 !important;
 }}
+{icons}
 
 /* Wide teal start */
 [class*="st-key-start_translate"] button {{
@@ -350,4 +467,4 @@ def _chrome_keys(page: str, pane: str) -> str:
 
 def css_for(theme: str, page: str = "translate", pane: str = "appearance") -> str:
     base = DARK if theme == "dark" else LIGHT
-    return base + _chrome_keys(page, pane)
+    return base + _chrome_keys(theme, page, pane)

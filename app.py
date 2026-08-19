@@ -35,6 +35,7 @@ from src.providers.codex_cli import codex_cli_path_setting, probe_codex_cli
 from src.providers.grok_cli import INSTALL_HINT as GROK_HINT
 from src.providers.grok_cli import grok_cli_path_setting, probe_grok_cli
 from src.security.secrets import load_secret, redact_secrets, save_secret_to_env
+from src.icons import CHECK, DASH, FILE, GLOBE, MOON, SUN, wrap
 from src.theme import css_for
 from src.ui_prefs import load_prefs, save_prefs
 
@@ -118,7 +119,7 @@ def L(key: str, **kwargs) -> str:
 
 st.set_page_config(
     page_title="Smart File Translation",
-    page_icon=str(ICON_PATH) if ICON_PATH.is_file() else "📄",
+    page_icon=str(ICON_PATH),
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -239,13 +240,12 @@ def render_chrome() -> None:
             _go("settings")
     dark = st.session_state.theme == "dark"
     with sun:
-        st.markdown('<div class="sfts-sunmoon">☀</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sfts-sunmoon">{wrap(SUN)}</div>', unsafe_allow_html=True)
     with tog:
-        knob = "  ●" if dark else "●  "
-        if st.button(knob, key="theme_toggle"):
+        if st.button(" ", key="theme_toggle"):
             _set_theme("light" if dark else "dark")
     with moon:
-        st.markdown('<div class="sfts-sunmoon">☾</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="sfts-sunmoon">{wrap(MOON)}</div>', unsafe_allow_html=True)
 
     if st.session_state.page != "translate":
         return
@@ -300,7 +300,10 @@ def render_appearance_pane() -> None:
         elif chosen != st.session_state.ui_lang or st.session_state.get("ui_lang_follow"):
             _set_lang(chosen, follow=False)
         st.markdown(f'<div class="sfts-muted">{L("card.lang_fallback")}</div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="sfts-lang-count">🌐  {L("card.lang_count")}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="sfts-lang-count">{wrap(GLOBE)}{L("card.lang_count")}</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def render_translation_pane() -> None:
@@ -394,12 +397,12 @@ def render_keys_pane() -> None:
         grok_label = _key_label("Official Grok CLI", "keys.grok_cli")
         if grok.usable:
             st.markdown(
-                f"**{grok_label}** &nbsp; <span class='sfts-pill-on'>✓ {L('keys.connected_cli')}</span>",
+                f"**{grok_label}** &nbsp; <span class='sfts-pill-on'>{wrap(CHECK)}{L('keys.connected_cli')}</span>",
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                f"**{grok_label}** &nbsp; <span class='sfts-pill-off'>● {L('keys.unset')}</span>",
+                f"**{grok_label}** &nbsp; <span class='sfts-pill-off'>{wrap(DASH)}{L('keys.unset')}</span>",
                 unsafe_allow_html=True,
             )
             if grok.hint == "login":
@@ -421,12 +424,12 @@ def render_keys_pane() -> None:
         codex_label = _key_label("Official Codex CLI", "keys.codex_cli")
         if codex.usable:
             st.markdown(
-                f"**{codex_label}** &nbsp; <span class='sfts-pill-on'>✓ {L('keys.connected_cli')}</span>",
+                f"**{codex_label}** &nbsp; <span class='sfts-pill-on'>{wrap(CHECK)}{L('keys.connected_cli')}</span>",
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                f"**{codex_label}** &nbsp; <span class='sfts-pill-off'>● {L('keys.unset')}</span>",
+                f"**{codex_label}** &nbsp; <span class='sfts-pill-off'>{wrap(DASH)}{L('keys.unset')}</span>",
                 unsafe_allow_html=True,
             )
             if codex.hint == "login":
@@ -451,12 +454,12 @@ def render_keys_pane() -> None:
                 tail = val[-4:] if len(val) >= 4 else ""
                 status = L("keys.connected", tail=tail) if tail else L("keys.set")
                 st.markdown(
-                    f"**{label}** &nbsp; <span class='sfts-pill-on'>✓ {status}</span>",
+                    f"**{label}** &nbsp; <span class='sfts-pill-on'>{wrap(CHECK)}{status}</span>",
                     unsafe_allow_html=True,
                 )
             else:
                 st.markdown(
-                    f"**{label}** &nbsp; <span class='sfts-pill-off'>● {L('keys.unset')}</span>",
+                    f"**{label}** &nbsp; <span class='sfts-pill-off'>{wrap(DASH)}{L('keys.unset')}</span>",
                     unsafe_allow_html=True,
                 )
                 pasted = st.text_input(
@@ -507,7 +510,7 @@ def render_glossary_pane() -> None:
             with c2:
                 ntr = st.text_input(L("glossary.translation"), value=trans, key=f"tr_{i}", label_visibility="collapsed")
             with c3:
-                if st.button("✕", key=f"del_{i}"):
+                if st.button("x", key=f"del_{i}"):
                     pairs.pop(i)
                     st.session_state.glossary_pairs = pairs
                     st.rerun()
@@ -529,10 +532,10 @@ def render_glossary_pane() -> None:
 def render_settings() -> None:
     rail, pane = st.columns([1, 3.2])
     labels = {
-        "appearance": "🖥  " + L("card.appearance"),
-        "translation": "文  " + L("card.translation"),
-        "keys": "🔑  " + L("card.keys"),
-        "glossary": "📖  " + L("card.glossary"),
+        "appearance": L("card.appearance"),
+        "translation": L("card.translation"),
+        "keys": L("card.keys"),
+        "glossary": L("card.glossary"),
     }
     with rail:
         for pane_id in SETTINGS_PANES:
@@ -585,13 +588,13 @@ def _show_file_chip() -> None:
     left, right = st.columns([8, 1])
     with left:
         st.markdown(
-            f'<div class="sfts-filechip"><span class="sfts-filechip-ico">📄</span>'
+            f'<div class="sfts-filechip">{wrap(FILE)}'
             f'<span class="sfts-filechip-name">{name}</span>'
             f'<span class="sfts-filechip-size">{size}</span></div>',
             unsafe_allow_html=True,
         )
     with right:
-        if st.button("✕", key="clear_picked"):
+        if st.button("x", key="clear_picked"):
             _clear_picked()
 
 
@@ -611,9 +614,9 @@ def render_translate() -> None:
                 L("main.source_type"),
                 options=["file", "folder", "zip"],
                 format_func=lambda x: {
-                    "file": "📄  " + L("main.seg_file"),
-                    "folder": "📁  " + L("main.seg_folder"),
-                    "zip": "🗜  " + L("main.seg_zip"),
+                    "file": L("main.seg_file"),
+                    "folder": L("main.seg_folder"),
+                    "zip": L("main.seg_zip"),
                 }[x],
                 key="source_type",
                 required=True,
@@ -625,8 +628,8 @@ def render_translate() -> None:
                 L("main.content_mode"),
                 options=["document", "game"],
                 format_func=lambda x: {
-                    "document": "💬  " + L("main.seg_doc"),
-                    "game": "🎮  " + L("main.seg_game"),
+                    "document": L("main.seg_doc"),
+                    "game": L("main.seg_game"),
                 }[x],
                 key="content_mode",
                 required=True,
