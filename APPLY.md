@@ -1,0 +1,36 @@
+# APPLY — path checklist (one sentence each)
+
+- `README.md` — English project overview, features, quick start, configuration, contact.
+- `README.zh-Hant.md` — Traditional Chinese project overview matching the English README.
+- `.env.example` — Template for provider keys and options; no real secrets.
+- `.gitignore` — Official Python gitignore from the empty public repo (includes `.env`).
+- `requirements.txt` — Runtime dependencies for Streamlit UI, extractors, and both providers.
+- `app.py` — Streamlit entry point: 12-language UI, upload, translate, glossary editor, download.
+- `src/__init__.py` — Package marker and version string.
+- `src/config.py` — Loads `.env`, exposes provider availability, paths, and chunk size.
+- `src/i18n.py` — Message catalog loader; adding a language means adding one JSON file.
+- `src/glossary.py` — Per-project local glossary read/write and prompt-block formatter.
+- `src/translator.py` — Chunking pipeline that calls the provider router with glossary context.
+- `src/extractors/__init__.py` — Dispatch extract/write for txt, md, docx, pdf.
+- `src/extractors/txt_md.py` — Plain-text and Markdown extract and write-back.
+- `src/extractors/docx_handler.py` — python-docx extract; best-effort paragraph rewrite on write.
+- `src/extractors/pdf_handler.py` — pypdf extract; reportlab simple multi-page PDF write-back.
+- `src/providers/__init__.py` — Public exports for router helpers.
+- `src/providers/base.py` — Abstract provider and clear TranslationError type.
+- `src/providers/openai_provider.py` — OpenAI / compatible chat-completions translator.
+- `src/providers/anthropic_provider.py` — Anthropic Messages API translator.
+- `src/providers/router.py` — Resolves auto or named provider; fails closed with clear message when no key.
+- `locales/zh-Hant.json` — Default Traditional Chinese UI catalog.
+- `locales/zh-Hans.json` — Simplified Chinese UI catalog.
+- `locales/en.json` — English UI catalog.
+- `locales/ja.json` — Japanese UI catalog.
+- `locales/ko.json` — Korean UI catalog.
+- `locales/es.json` — Spanish UI catalog.
+- `locales/fr.json` — French UI catalog.
+- `locales/de.json` — German UI catalog.
+- `locales/pt.json` — Portuguese UI catalog.
+- `locales/vi.json` — Vietnamese UI catalog.
+- `locales/th.json` — Thai UI catalog.
+- `locales/id.json` — Indonesian UI catalog.
+- `projects/` — Directory for per-project glossary.json files (created on demand).
+- `data/outputs/` — Default directory for written translated files.
