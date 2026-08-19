@@ -370,6 +370,21 @@ def _chrome_keys(theme: str, page: str, pane: str) -> str:
   flex: 1 1 0 !important;
   white-space: nowrap !important;
 }}
+[class*="st-key-source_type"] button {{
+  flex: 1 1 auto !important;
+  flex-shrink: 0 !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}}
+[class*="st-key-source_type"] button p,
+[class*="st-key-source_type"] button span,
+[class*="st-key-source_type"] button div {{
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+}}
 [class*="st-key-source_type"] button[aria-pressed="true"],
 [class*="st-key-source_type"] button[aria-checked="true"],
 [class*="st-key-source_type"] button[data-selected="true"],

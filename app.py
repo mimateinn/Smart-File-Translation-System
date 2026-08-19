@@ -599,7 +599,7 @@ def _show_file_chip() -> None:
 
 
 def _seg_row(label: str, control):
-    lab, ctl = st.columns([1.15, 2.35], vertical_alignment="center")
+    lab, ctl = st.columns([0.95, 2.85], vertical_alignment="center")
     with lab:
         st.markdown(f'<div class="sfts-row-label">{label}</div>', unsafe_allow_html=True)
     with ctl:

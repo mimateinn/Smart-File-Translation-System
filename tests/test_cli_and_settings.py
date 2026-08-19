@@ -149,6 +149,7 @@ def test_v2_chrome_contract() -> None:
     css = css_for("light", "settings", "appearance")
     assert "data:image/svg+xml" in css
     assert "inset 3px 0 0 #14b8a6" in css
+    assert "st-key-source_type" in css and "min-width: max-content" in css
     app = (root / "app.py").read_text(encoding="utf-8")
     assert "sfts-hero" in app
     assert "sfts-filechip" in app
