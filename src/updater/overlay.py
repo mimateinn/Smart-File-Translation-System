@@ -185,7 +185,7 @@ def _backup_tree(root: Path, backup: Path) -> None:
         shutil.copy2(src, dest)
 
 
-def _restore_tree(root: Path, backup: Path) -> None:
+def _restore_tree(root: Path, backup: Path, added: list[str] | None = None) -> None:
     for src in backup.rglob("*"):
         if not src.is_file():
             continue
@@ -196,6 +196,13 @@ def _restore_tree(root: Path, backup: Path) -> None:
             continue
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dest)
+    for rel in added or []:
+        if is_protected(rel):
+            continue
+        dest = (root / rel).resolve()
+        _assert_inside(root, dest)
+        if dest.is_file():
+            dest.unlink()
 
 
 def apply_overlay_from_dir(root: Path, source: Path, tag: str, sha: str) -> None:
@@ -203,6 +210,7 @@ def apply_overlay_from_dir(root: Path, source: Path, tag: str, sha: str) -> None
     root = root.resolve()
     source = source.resolve()
     backup = Path(tempfile.mkdtemp(prefix="sfts_overlay_backup_"))
+    added: list[str] = []
     try:
         _backup_tree(root, backup)
         for src in source.rglob("*"):
@@ -213,11 +221,14 @@ def apply_overlay_from_dir(root: Path, source: Path, tag: str, sha: str) -> None
                 continue
             dest = (root / rel).resolve()
             _assert_inside(root, dest)
+            is_new = not dest.exists()
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dest)
+            if is_new:
+                added.append(rel)
         write_stamp(root, tag, sha)
     except Exception:
-        _restore_tree(root, backup)
+        _restore_tree(root, backup, added)
         raise
     finally:
         shutil.rmtree(backup, ignore_errors=True)
@@ -233,7 +244,7 @@ def _latest_official_release() -> tuple[str, str]:
     for item in items:
         if not isinstance(item, dict):
             continue
-        if item.get("draft"):
+        if item.get("draft") or item.get("prerelease"):
             continue
         tag = str(item.get("tag_name") or "").strip()
         if not is_release_tag(tag):

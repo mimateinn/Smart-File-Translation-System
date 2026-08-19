@@ -65,6 +65,7 @@ def test_fail_closed_and_skips_env(tmp_path: Path | None = None) -> None:
     src2 = root / "incoming2"
     src2.mkdir()
     (src2 / "keep.txt").write_text("NEWER\n", encoding="utf-8")
+    (src2 / "brand_new.txt").write_text("only in failed overlay\n", encoding="utf-8")
 
     def boom(*_a, **_k):
         raise RuntimeError("forced fail")
@@ -87,6 +88,7 @@ def test_fail_closed_and_skips_env(tmp_path: Path | None = None) -> None:
         except RuntimeError:
             pass
         assert (root / "keep.txt").read_text(encoding="utf-8") == "NEW\n"
+        assert not (root / "brand_new.txt").exists()
     finally:
         ov.write_stamp = real_write  # type: ignore[assignment]
 
